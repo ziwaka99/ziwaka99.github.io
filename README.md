@@ -20,8 +20,10 @@
 ## 👨‍💻 About Me
 
 I'm a passionate developer interested in building innovative solutions and exploring new technologies. This is my personal portfolio and project showcase.
+ 
+  <!-- for beauty -->
+  <div>&nbsp;</div>
 
----
 
 ## 📚 Featured Projects
 
@@ -31,20 +33,26 @@ I'm a passionate developer interested in building innovative solutions and explo
 - **[Project 4](#)** - Description of your fourth project
 - **[Project 5](#)** - Description of your fifth project
 
----
+  <!-- for beauty -->
+  <div>&nbsp;</div>
+
 
 ## 📊 GitHub Stats
 
 [![GitHub Stats](https://github-readme-stats.vercel.app/api?username=ziwaka99&show_icons=true&theme=radical)](https://github.com/anuraghazra/github-readme-stats)
 
----
+  <!-- for beauty -->
+  <div>&nbsp;</div>
+
 
 ### Publication
 - React
 - Node.js
 - Git & GitHub
 
----
+  <!-- for beauty -->
+  <div>&nbsp;</div>
+
 
 ## 🎯 Reearch interest
 
@@ -53,14 +61,17 @@ I'm a passionate developer interested in building innovative solutions and explo
 - [ ] Learn new technologies
 - [ ] Share knowledge through blogging
 
----
+  <!-- for beauty -->
+  <div>&nbsp;</div>
+
 
 ## 📫 Get In Touch
 
 - **GitHub:** [@ziwaka99](https://github.com/ziwaka99)
 - **Email:** zhu.lujia@u.nus.edu
 
----
+  <!-- for beauty -->
+  <div>&nbsp;</div>
 
 <div align="center">
   <p>⭐ If you like my projects, please consider giving them a star!</p>

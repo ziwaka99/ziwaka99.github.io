@@ -32,8 +32,9 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
 - Thermal comfort/ Cooling devices
 - Perception Study(Neuroscience)
 
-  <!-- for beauty -->
-  <div>&nbsp;</div>
+
+
+
 
 ## ✦ Featured Projects
 
@@ -42,8 +43,7 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
 - **Project 3** - Updating
 - **Project 4** - Updating
 
-  <!-- for beauty -->
-  <div>&nbsp;</div>
+
 
 ## ✦Experience
 

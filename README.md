@@ -26,12 +26,11 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
   <!-- for beauty -->
   <div>&nbsp;</div>
 
-## ✦ Reearch interest
+## ✦ Research interest
 
 - Computer vision
 - Thermal comfort/ Cooling devices
 - Perception Study(Neuroscience)
-
 
   <!-- for beauty -->
   <div>&nbsp;</div>
@@ -42,7 +41,6 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
 - **Project 2** - Updating 
 - **Project 3** - Updating
 - **Project 4** - Updating
-
 
   <!-- for beauty -->
   <div>&nbsp;</div>

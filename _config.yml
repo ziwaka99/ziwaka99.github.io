@@ -1,3 +1,7 @@
-theme: jekyll-theme-hacker
-title: Lujia Zhu
-description: Z-World
+title: ziwaka99's Blog
+description: Personal blog
+baseurl: ""
+url: "https://ziwaka99.github.io"
+theme: jekyll-theme-minimal
+plugins:
+  - jekyll-feed

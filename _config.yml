@@ -2,6 +2,6 @@ title: ziwaka99's Blog
 description: Personal blog
 baseurl: ""
 url: "https://ziwaka99.github.io"
-theme: jekyll-theme-minimal
+theme: jekyll-theme-hacker
 plugins:
   - jekyll-feed

@@ -49,12 +49,12 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
 
 ## ✦Experience
 
-#### Research Assistant(Urban studies,Planning and Health)
+- #### Research Assistant(Urban studies,Planning and Health)
 NUS Business School · Part-time
 Jan 2025 - Sep 2025 · 9 mos
 Singapore · On-site
 
-#### Research Assistant (thermal comfort)
+- #### Research Assistant (thermal comfort)
 City Syntax Lab · Part-time
 Jan 2024 - Aug 2025 · 1 yr 8 mos
 Singapore · On-site
@@ -66,19 +66,16 @@ Singapore · On-site
 ## ✦ Education
 
 - #### NUS College of Design & Engineering
-Doctor of Philosophy - PhD, Built environment
-
-Aug 2025 – Present
+Doctor of Philosophy - PhD, Built environment,
+2025 – Present
 
 - #### NUS College of Design & Engineering
-Master of landscape architecture, Landscape architecture
-
-Aug 2023 – Jul 2025
+Master of landscape architecture, Landscape architecture,
+2023 – 2025
 
 
 - #### Southeast University
-Bachelor of Engineering - BE, Landscape Architecture
-
+Bachelor of Engineering - BE, Landscape Architecture,
 2018 – 2023
 
   <!-- for beauty -->

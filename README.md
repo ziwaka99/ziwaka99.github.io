@@ -75,7 +75,6 @@ Doctor of Philosophy - PhD, Built environment,
 Master of landscape architecture, Landscape architecture,
 2023 – 2025
 
-
 - #### Southeast University
 Bachelor of Engineering - BE, Landscape Architecture,
 2018 – 2023

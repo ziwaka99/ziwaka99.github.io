@@ -29,9 +29,8 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
 ## ✦ Reearch interest
 
 - Computer vision
-- Thermal comfort 
+- Thermal comfort/ Cooling devices
 - Perception Study(Neuroscience)
-- Cooling devices
 
 
   <!-- for beauty -->
@@ -43,7 +42,6 @@ Currently focused on Thermal Comfort while actively exploring the potential appl
 - **Project 2** - Updating 
 - **Project 3** - Updating
 - **Project 4** - Updating
-- **Project 5** - Updating
 
 
   <!-- for beauty -->
@@ -86,10 +84,10 @@ Bachelor of Engineering - BE, Landscape Architecture,
 ## ✦ Publication
 
 - #### Visual determinants of outdoor thermal comfort: integrating explainable AI and perceptual assessments
-
 **Lujia Zhu**, Holly W. Samuelson, Filip Biljecki, Chun Liang Tan, Nyuk Hien Wong, Yu Qian Ang
-Building and Environment,Volume 293,2026,114322,ISSN 0360-1323,
-https://doi.org/10.1016/j.buildenv.2026.114322.
+Building and Environment,Volume 293,2026,114322,ISSN 0360-1323
+https://doi.org/10.1016/j.buildenv.2026.114322
+
 
 - #### From Sight to Sensation: Understanding Visual Elements’ Impact on Thermal Comfort via Computer Vision and Thermal Voting
 **Lujia Zhu**, Holly Samuelson, Nyuk Wong Hien, Yu Ang Qian

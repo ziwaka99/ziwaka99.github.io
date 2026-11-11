@@ -71,6 +71,8 @@ main { position: relative; min-height: 360px; background: #fbfcfd; }
 .ctl { position: absolute; right: 16px; top: 16px; display: flex; gap: 6px; }
 .btn { font: 600 12px var(--f-body); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; cursor: pointer; color: var(--ink); }
 .btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); min-width: 92px; }
+.btn.primary:hover { background: #2a3442; }
 .attrib { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: var(--muted); background: rgba(255,255,255,.85); padding: 3px 8px; border-radius: 6px; }
 @media (max-width: 820px) {
   .app { grid-template-columns: 1fr; grid-template-rows: auto 70vh; height: auto; }
@@ -95,6 +97,7 @@ main { position: relative; min-height: 360px; background: #fbfcfd; }
   <main>
     <div id="map" aria-label="3D campus map with the selected student's walking routes"></div>
     <div class="ctl">
+      <button class="btn primary" id="play" type="button" aria-pressed="false">Play day</button>
       <button class="btn" id="fit" type="button">Fit route</button>
       <button class="btn" id="tilt" type="button">2D view</button>
     </div>
@@ -153,31 +156,6 @@ const map = new deck.Deck({
   }
 });
 
-/* direction arrows: one every ~110 m along each walk, at least one per walk */
-const ARROW_ICON = Object.fromEntries(KINDS.map(k => [k, {
-  id: k, width: 48, height: 48, anchorY: 24,
-  url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path d="M12 3.5 L19.5 19 L12 15 L4.5 19 Z" fill="${HEX[k]}" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>`)
-}]));
-function legArrows(leg, i) {
-  const p = leg.path, k = Math.cos(1.297 * Math.PI / 180);
-  const seg = [];
-  let total = 0;
-  for (let j = 1; j < p.length; j++) {
-    const dx = (p[j][0] - p[j - 1][0]) * 111320 * k, dy = (p[j][1] - p[j - 1][1]) * 110574, d = Math.hypot(dx, dy);
-    seg.push({ a: p[j - 1], b: p[j], d, start: total, bearing: Math.atan2(dx, dy) * 180 / Math.PI });
-    total += d;
-  }
-  if (total < 1) return [];
-  const n = Math.max(1, Math.floor(total / 110));
-  const out = [];
-  for (let m = 1; m <= n; m++) {
-    const at = total * m / (n + 1);
-    const s0 = seg.find(x => at <= x.start + x.d) || seg[seg.length - 1];
-    const t = s0.d ? (at - s0.start) / s0.d : 0;
-    out.push({ pos: [s0.a[0] + (s0.b[0] - s0.a[0]) * t, s0.a[1] + (s0.b[1] - s0.a[1]) * t], angle: -s0.bearing, kind: leg.kind, i });
-  }
-  return out;
-}
 function routeLayers(s) {
   const alpha = i => (focus === null || focus.leg === i) ? 255 : 70;
   const sAlpha = i => (focus === null || focus.stops.includes(i)) ? 255 : 90;
@@ -186,12 +164,11 @@ function routeLayers(s) {
   return [
     new deck.PathLayer({ id: "casing", data: legs, getPath: d => d.path, getColor: d => [255, 255, 255, alpha(d.i)], widthUnits: "pixels", getWidth: 6, capRounded: true, jointRounded: true, parameters: nodepth, updateTriggers: { getColor: [focus] } }),
     new deck.PathLayer({ id: "route", data: legs, getPath: d => d.path, getColor: d => rgb(HEX[d.kind], alpha(d.i)), widthUnits: "pixels", getWidth: 3.25, capRounded: true, jointRounded: true, getDashArray: d => d.off ? [2, 2] : [0, 0], parameters: nodepth, updateTriggers: { getColor: [focus] } }),
-    new deck.IconLayer({ id: "arrows", data: legs.flatMap(l => legArrows(l, l.i)), getPosition: d => d.pos, getIcon: d => ARROW_ICON[d.kind], getAngle: d => d.angle, billboard: false, sizeUnits: "pixels", getSize: 22, getColor: d => [255, 255, 255, alpha(d.i)], parameters: nodepth, updateTriggers: { getColor: [focus] } }),
     new deck.ScatterplotLayer({ id: "stops", data: s.stops.map((d, i) => ({ ...d, i })), getPosition: d => [d.lon, d.lat], billboard: true, radiusUnits: "pixels", getRadius: 12, stroked: true, lineWidthUnits: "pixels", getLineWidth: 3, getLineColor: [255, 255, 255, 255], getFillColor: d => rgb(HEX[d.kind], sAlpha(d.i)), pickable: true, parameters: nodepth, updateTriggers: { getFillColor: [focus] } }),
     new deck.TextLayer({ id: "letters", data: s.stops, getPosition: d => [d.lon, d.lat], getText: d => d.letter, getSize: 12, getColor: [255, 255, 255, 255], fontFamily: "Archivo, Arial, sans-serif", fontWeight: 800, parameters: nodepth })
   ];
 }
-function render() { map.setProps({ layers: [...baseLayers, ...(cur ? routeLayers(cur) : [])] }); }
+function render() { map.setProps({ layers: [...baseLayers, ...(cur ? routeLayers(cur) : []), ...playLayers()] }); }
 
 function fitTo(points, zoomCap = 17.2) {
   const lons = points.map(p => p[0]), lats = points.map(p => p[1]);
@@ -205,8 +182,104 @@ function fitTo(points, zoomCap = 17.2) {
 }
 const allPts = s => s.legs.flatMap(l => l.path).concat(s.stops.map(d => [d.lon, d.lat]));
 
+/* ---------- playback: a dot walks the day at constant speed, pausing at each stop ---------- */
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SPEED = 450;   // map metres per second of playback
+const PAUSE = 1.8;   // seconds shown at each stop
+const KLAT = Math.cos(1.297 * Math.PI / 180);
+const PLAY = { on: false, raf: 0, leg: 0, d: 0, pauseLeft: 0, pos: null, label: null, last: 0, done: false };
+function legGeom(l) {
+  if (l._cum) return l;
+  const c = [0];
+  for (let j = 1; j < l.path.length; j++) {
+    const a = l.path[j - 1], b = l.path[j];
+    c.push(c[j - 1] + Math.hypot((b[0] - a[0]) * 111320 * KLAT, (b[1] - a[1]) * 110574));
+  }
+  l._cum = c; l._len = c[c.length - 1];
+  return l;
+}
+function pointAt(l, d) {
+  const c = legGeom(l)._cum;
+  let j = 1;
+  while (j < c.length - 1 && c[j] < d) j++;
+  const t = c[j] > c[j - 1] ? Math.min(1, Math.max(0, (d - c[j - 1]) / (c[j] - c[j - 1]))) : 0;
+  const a = l.path[j - 1], b = l.path[j];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+function stopLabel(i) {
+  const st = cur.stops[i];
+  const acts = cur.rows.filter(r => r.type === "act" && r.stop === i);
+  const lines = acts.slice(0, 3).map(r => `${r.start}  ${r.label}`);
+  if (acts.length > 3) lines.push(`+${acts.length - 3} more`);
+  return { pos: [st.lon, st.lat], text: `${st.letter} \u00b7 ${st.name}\n${lines.join("\n")}`, kind: st.kind };
+}
+function markStop(i) {
+  document.querySelectorAll(".timeline .on").forEach(x => x.classList.remove("on"));
+  const rows = [...document.querySelectorAll("#timeline .row")].filter(li => +li.dataset.stop === i);
+  rows.forEach(li => li.classList.add("on"));
+  if (rows[0]) rows[0].scrollIntoView({ block: "nearest", behavior: REDUCE ? "auto" : "smooth" });
+}
+function arriveAt(i) {
+  PLAY.pos = [cur.stops[i].lon, cur.stops[i].lat];
+  PLAY.label = stopLabel(i); PLAY.pauseLeft = PAUSE; markStop(i);
+}
+function tick(t) {
+  if (!PLAY.on) return;
+  const dt = PLAY.last ? Math.min(0.25, (t - PLAY.last) / 1000) : 0;   // cap so a stalled tab does not jump
+  PLAY.last = t;
+  if (PLAY.pauseLeft > 0) {
+    PLAY.pauseLeft -= dt;
+    if (PLAY.pauseLeft <= 0) {
+      if (PLAY.leg >= cur.legs.length) { finish(); return; }
+      PLAY.label = null;
+    }
+  } else {
+    const l = legGeom(cur.legs[PLAY.leg]);
+    PLAY.d += REDUCE ? Infinity : SPEED * dt;
+    if (PLAY.d >= l._len) { PLAY.leg++; PLAY.d = 0; arriveAt(l.to); }
+    else PLAY.pos = pointAt(l, PLAY.d);
+  }
+  render();
+  PLAY.raf = requestAnimationFrame(tick);
+}
+function setPlayBtn() {
+  const b = document.getElementById("play");
+  b.textContent = PLAY.on ? "Pause" : PLAY.done ? "Replay" : PLAY.pos ? "Resume" : "Play day";
+  b.setAttribute("aria-pressed", String(PLAY.on));
+}
+function play() {
+  if (!cur || !cur.legs.length) return;
+  if (PLAY.done || !PLAY.pos) {
+    Object.assign(PLAY, { leg: 0, d: 0, done: false });
+    focus = null; arriveAt(cur.legs[0].from); fitTo(allPts(cur));
+  }
+  PLAY.on = true; PLAY.last = 0; setPlayBtn();
+  PLAY.raf = requestAnimationFrame(tick);
+}
+function pause() { PLAY.on = false; cancelAnimationFrame(PLAY.raf); setPlayBtn(); }
+function finish() { PLAY.on = false; PLAY.done = true; setPlayBtn(); render(); }
+function resetPlay() { pause(); Object.assign(PLAY, { pos: null, label: null, done: false }); setPlayBtn(); }
+function playLayers() {
+  if (!PLAY.pos) return [];
+  const nodepth = { depthTest: false };
+  const out = [new deck.ScatterplotLayer({
+    id: "dot", data: [PLAY.pos], getPosition: d => d, billboard: true, radiusUnits: "pixels", getRadius: 7,
+    stroked: true, lineWidthUnits: "pixels", getLineWidth: 3, getLineColor: [255, 255, 255, 255],
+    getFillColor: rgb(HEX.home), parameters: nodepth, updateTriggers: { getPosition: [PLAY.pos] }
+  })];
+  if (PLAY.label) out.push(new deck.TextLayer({
+    id: "play-label", data: [PLAY.label], getPosition: d => d.pos, getText: d => d.text, characterSet: "auto",
+    getSize: 13, lineHeight: 1.4, fontFamily: "IBM Plex Sans, Arial, sans-serif", fontWeight: 600,
+    getColor: rgb(HEX.home), getTextAnchor: "start", getAlignmentBaseline: "bottom", getPixelOffset: [16, -12],
+    background: true, getBackgroundColor: [255, 255, 255, 245], backgroundPadding: [10, 8],
+    getBorderColor: d => rgb(HEX[d.kind]), getBorderWidth: 2, parameters: nodepth
+  }));
+  return out;
+}
+
 /* ---------- panel ---------- */
 function select(pid) {
+  resetPlay();
   cur = DATA.students.find(s => s.pid === pid); focus = null;
   document.querySelectorAll("#picker button").forEach(b => b.setAttribute("aria-pressed", b.dataset.pid === pid));
   const p = cur.profile;
@@ -228,7 +301,7 @@ function select(pid) {
       li.onclick = li.onkeydown = e => { if (e.type === "keydown" && e.key !== "Enter") return; setFocus({ leg: r.leg, stops: [l.from, l.to] }, l.path, li); };
     } else {
       const k = ACT_KIND[r.activity] || "rest", c = HEX[k], st = cur.stops[r.stop];
-      li.className = "row"; li.tabIndex = 0;
+      li.className = "row"; li.tabIndex = 0; li.dataset.stop = r.stop;
       li.innerHTML = `<span class="time" style="background:${c}">${r.start}</span><span class="tick"></span><span class="icon" style="background:${c}">${svg(k)}</span>
         <span class="label"><b>${r.label}</b><small>${r.place}${r.end ? ` · until ${r.end}` : ""}</small></span>
         ${r.stop !== lastStop ? `<span class="letter" style="background:${HEX[st.kind]}">${st.letter}</span>` : "<span></span>"}`;
@@ -240,6 +313,7 @@ function select(pid) {
   render(); fitTo(allPts(cur));
 }
 function setFocus(f, pts, li) {
+  if (PLAY.on) pause();
   const same = focus && li.classList.contains("on");
   document.querySelectorAll(".timeline .on").forEach(x => x.classList.remove("on"));
   if (same) { focus = null; render(); fitTo(allPts(cur)); return; }
@@ -250,6 +324,7 @@ function setFocus(f, pts, li) {
 document.getElementById("picker").innerHTML = DATA.students.map(s => `<button type="button" data-pid="${s.pid}" aria-pressed="false">${s.pid}</button>`).join("");
 document.querySelectorAll("#picker button").forEach(b => b.onclick = () => select(b.dataset.pid));
 document.getElementById("legend").innerHTML = KINDS.filter(k => k !== "home").map(k => `<span><i style="background:${HEX[k]}"></i>${KIND_LABEL[k]}</span>`).join("");
+document.getElementById("play").onclick = () => (PLAY.on ? pause() : play());
 document.getElementById("fit").onclick = () => { focus = null; document.querySelectorAll(".timeline .on").forEach(x => x.classList.remove("on")); render(); fitTo(allPts(cur)); };
 document.getElementById("tilt").onclick = e => { pitch3d = !pitch3d; e.target.textContent = pitch3d ? "2D view" : "3D view"; fitTo(allPts(cur)); };
 const d = new Date(DATA.meta.sim_date + "T00:00:00");

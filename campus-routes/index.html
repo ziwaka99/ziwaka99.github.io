@@ -153,14 +153,40 @@ const map = new deck.Deck({
   }
 });
 
+/* direction arrows: one every ~110 m along each walk, at least one per walk */
+const ARROW_ICON = Object.fromEntries(KINDS.map(k => [k, {
+  id: k, width: 48, height: 48, anchorY: 24,
+  url: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path d="M12 3.5 L19.5 19 L12 15 L4.5 19 Z" fill="${HEX[k]}" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>`)
+}]));
+function legArrows(leg, i) {
+  const p = leg.path, k = Math.cos(1.297 * Math.PI / 180);
+  const seg = [];
+  let total = 0;
+  for (let j = 1; j < p.length; j++) {
+    const dx = (p[j][0] - p[j - 1][0]) * 111320 * k, dy = (p[j][1] - p[j - 1][1]) * 110574, d = Math.hypot(dx, dy);
+    seg.push({ a: p[j - 1], b: p[j], d, start: total, bearing: Math.atan2(dx, dy) * 180 / Math.PI });
+    total += d;
+  }
+  if (total < 1) return [];
+  const n = Math.max(1, Math.floor(total / 110));
+  const out = [];
+  for (let m = 1; m <= n; m++) {
+    const at = total * m / (n + 1);
+    const s0 = seg.find(x => at <= x.start + x.d) || seg[seg.length - 1];
+    const t = s0.d ? (at - s0.start) / s0.d : 0;
+    out.push({ pos: [s0.a[0] + (s0.b[0] - s0.a[0]) * t, s0.a[1] + (s0.b[1] - s0.a[1]) * t], angle: -s0.bearing, kind: leg.kind, i });
+  }
+  return out;
+}
 function routeLayers(s) {
   const alpha = i => (focus === null || focus.leg === i) ? 255 : 70;
   const sAlpha = i => (focus === null || focus.stops.includes(i)) ? 255 : 90;
   const nodepth = { depthTest: false };
   const legs = s.legs.map((l, i) => ({ ...l, i }));
   return [
-    new deck.PathLayer({ id: "casing", data: legs, getPath: d => d.path, getColor: d => [255, 255, 255, alpha(d.i)], widthUnits: "pixels", getWidth: 12, capRounded: true, jointRounded: true, parameters: nodepth, updateTriggers: { getColor: [focus] } }),
-    new deck.PathLayer({ id: "route", data: legs, getPath: d => d.path, getColor: d => rgb(HEX[d.kind], alpha(d.i)), widthUnits: "pixels", getWidth: 6.5, capRounded: true, jointRounded: true, getDashArray: d => d.off ? [2, 2] : [0, 0], parameters: nodepth, updateTriggers: { getColor: [focus] } }),
+    new deck.PathLayer({ id: "casing", data: legs, getPath: d => d.path, getColor: d => [255, 255, 255, alpha(d.i)], widthUnits: "pixels", getWidth: 6, capRounded: true, jointRounded: true, parameters: nodepth, updateTriggers: { getColor: [focus] } }),
+    new deck.PathLayer({ id: "route", data: legs, getPath: d => d.path, getColor: d => rgb(HEX[d.kind], alpha(d.i)), widthUnits: "pixels", getWidth: 3.25, capRounded: true, jointRounded: true, getDashArray: d => d.off ? [2, 2] : [0, 0], parameters: nodepth, updateTriggers: { getColor: [focus] } }),
+    new deck.IconLayer({ id: "arrows", data: legs.flatMap(l => legArrows(l, l.i)), getPosition: d => d.pos, getIcon: d => ARROW_ICON[d.kind], getAngle: d => d.angle, billboard: false, sizeUnits: "pixels", getSize: 22, getColor: d => [255, 255, 255, alpha(d.i)], parameters: nodepth, updateTriggers: { getColor: [focus] } }),
     new deck.ScatterplotLayer({ id: "stops", data: s.stops.map((d, i) => ({ ...d, i })), getPosition: d => [d.lon, d.lat], billboard: true, radiusUnits: "pixels", getRadius: 12, stroked: true, lineWidthUnits: "pixels", getLineWidth: 3, getLineColor: [255, 255, 255, 255], getFillColor: d => rgb(HEX[d.kind], sAlpha(d.i)), pickable: true, parameters: nodepth, updateTriggers: { getFillColor: [focus] } }),
     new deck.TextLayer({ id: "letters", data: s.stops, getPosition: d => [d.lon, d.lat], getText: d => d.letter, getSize: 12, getColor: [255, 255, 255, 255], fontFamily: "Archivo, Arial, sans-serif", fontWeight: 800, parameters: nodepth })
   ];
